@@ -1,0 +1,255 @@
+/* Custom Theme Colors based on user image */
+:root {
+    --user-bubble-color: #4DA6A6;
+    --bot-bubble-color: #F0F0E8;
+    --background-color: #F5F5F5;
+    --text-color-dark: #333333;
+    --accent-color: #58B8B8;
+    --sidebar-width: 250px; 
+    --border-color: #e0e0e0; 
+}
+
+/* --- Global Layout --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+    /* background pic */
+    background-image: url(玉山.jpg);
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* 新增 main-layout 樣式 */
+.main-layout {
+    display: flex; 
+    width: 90%;
+    max-width: 1000px; 
+    height: 80vh; 
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+    overflow: hidden; 
+    /* background-color: #ffffff; */
+    background-color: rgba(255, 255, 255, 0.9); /* 半透明背景 */
+}
+
+/* --- 側邊欄樣式 --- */
+.sidebar {
+    width: var(--sidebar-width);
+    /* background-color: #f8f8f8; */
+    background-color: rgba(248, 248, 248, 0.9); /* 半透明背景 */
+    border-right: 1px solid var(--border-color);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+#new-chat-button {
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#new-chat-button:hover {
+    background-color: var(--user-bubble-color);
+}
+
+/* 歷史紀錄列表樣式 */
+#history-list {
+    flex-grow: 1;
+}
+
+.history-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: transparent;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    color: var(--text-color-dark);
+    overflow: hidden; 
+    white-space: nowrap; 
+    text-overflow: ellipsis; 
+    border: 1px solid transparent;
+}
+
+.history-item:hover {
+    background-color: #ededed;
+}
+
+.history-item.active {
+    background-color: var(--user-bubble-color);
+    color: white;
+    font-weight: bold;
+}
+
+
+/* --- 聊天容器樣式調整 --- */
+.chat-container {
+    flex-grow: 1; 
+    width: auto; 
+    max-width: none; 
+    box-shadow: none; 
+    border-radius: 0;
+    height: 100%; 
+    position: static; 
+    z-index: auto; 
+    display: flex; /* 新增 flex 以確保 chat-history 和 input-area 正確佔位 */
+    flex-direction: column;
+}
+
+/* Chat History Area */
+#chat-history {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    border-bottom: 1px solid #eee;
+    scroll-behavior: smooth;
+}
+
+/* Single Message Style */
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    max-width: 80%;
+    width: fit-content;
+    word-wrap: break-word;
+    line-height: 1.5;
+    /* !! 尖角準備 !! */
+    position: relative; 
+}
+
+/* --- Message Bubble Styles (尖角效果) --- */
+
+.user-message {
+    background-color: var(--user-bubble-color); 
+    color: white;
+    margin-left: auto;
+    /* 調整圓角讓尖角看起來更自然 */
+    border-radius: 8px 8px 0 8px; 
+}
+
+/* 尖角樣式：使用者 (右下角) */
+.user-message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: -7px; 
+    width: 0;
+    height: 0;
+    border: 10px solid transparent; 
+    border-bottom-color: var(--user-bubble-color); 
+    border-right-width: 0; 
+    border-bottom-left-radius: 5px; 
+    transform: rotate(45deg); 
+}
+
+.bot-message {
+    background-color: var(--bot-bubble-color);
+    color: var(--text-color-dark);
+    margin-right: auto;
+    /* 調整圓角讓尖角看起來更自然 */
+    border-radius: 8px 8px 8px 0; 
+}
+
+/* 尖角樣式：機器人 (左下角) */
+.bot-message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -7px; 
+    width: 0;
+    height: 0;
+    border: 10px solid transparent; 
+    border-bottom-color: var(--bot-bubble-color); 
+    border-left-width: 0; 
+    border-bottom-right-radius: 5px; 
+    transform: rotate(-45deg); 
+}
+
+/* Input Area */
+.input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    margin-right: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+#user-input:focus {
+    border-color: var(--user-bubble-color);
+    outline: none;
+}
+
+/* Send Button Style */
+#send-button {
+    background-color: var(--user-bubble-color);
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#send-button:hover {
+    background-color: var(--accent-color);
+}
+
+#send-button:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.bot-message .typing-target {
+    display: inline; 
+}
+
+@media (max-width: 768px) {
+    .main-layout {
+        width: 100%;
+        height: 100vh;
+        max-width: none;
+        border-radius: 0;
+    }
+    .sidebar {
+        /* 在手機版隱藏側邊欄 */
+        display: none; 
+    }
+    .chat-container {
+        width: 100%;
+        height: 100vh;
+    }
+    .message {
+        max-width: 90%;
+    }
+}
