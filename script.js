@@ -23,28 +23,83 @@ let currentMessages = []; // 當前對話的訊息陣列 [{sender: 'bot', conten
  * @param {string} input
  * @returns {Promise<object>} - Simulated API response
  */
-function dummyApiCall(input) {
-    return new Promise(resolve => {
-        // Simulate latency
-        setTimeout(() => {
-            let responseMessage = `您輸入了：「${input}」。`; 
+// function dummyApiCall(input) {
+//     return new Promise(resolve => {
+//         // Simulate latency
+//         setTimeout(() => {
+//             let responseMessage = `您輸入了：「${input}」。`; 
 
-            if (input.toLowerCase().includes('時間')) {
-                const now = new Date().toLocaleTimeString('zh-TW');
-                responseMessage += ` 現在時間是 ${now}。`; 
-            } else if (input.toLowerCase().includes('名字')) {
-                responseMessage += ` 這是 Demo Bot，很高興為您服務。`; 
-            } else if (input.length < 5) {
-                responseMessage += ` 資訊有點簡短，請提供更多細節！`; 
-            } else {
-                responseMessage += ` API 成功讀取您的資訊，並模擬產生了這段輸出內容。`; 
-            }
+//             if (input.toLowerCase().includes('時間')) {
+//                 const now = new Date().toLocaleTimeString('zh-TW');
+//                 responseMessage += ` 現在時間是 ${now}。`; 
+//             } else if (input.toLowerCase().includes('名字')) {
+//                 responseMessage += ` 這是 Demo Bot，很高興為您服務。`; 
+//             } else if (input.length < 5) {
+//                 responseMessage += ` 資訊有點簡短，請提供更多細節！`; 
+//             } else {
+//                 responseMessage += ` API 成功讀取您的資訊，並模擬產生了這段輸出內容。`; 
+//             }
 
-            resolve({ success: true, message: responseMessage });
-        }, 1000); // 1s API processing time
+//             resolve({ success: true, message: responseMessage });
+//         }, 1000); // 1s API processing time
+//     });
+// }
+async function agentEngineApiCall(input) {
+    const API_URL = 'https://api-gateway-227719466535.us-central1.run.app/api/chat';
+    
+    // 1. 轉換對話歷史格式 (從 currentMessages 轉換為 API 期望的 {role: '...', content: '...'} 格式)
+    // 注意：currentMessages 包含了初始歡迎訊息，我們通常會排除它，因為它不是對話的一部分。
+    // 但是，由於您在 handleSendMessage 中已經將使用者輸入 push 進 currentMessages，
+    // 這裡可以直接使用 currentMessages 進行轉換。
+    
+    // 排除初始歡迎訊息 (通常是 currentMessages[0])
+    const messagesForApi = currentMessages.slice(1).map(msg => {
+        // 將 'user' 對應到 'user' role
+        // 將 'bot' 對應到 'assistant' role (這是 LLM API 常見的 Bot 角色名稱)
+        const role = (msg.sender === 'user') ? 'user' : 'assistant'; 
+        return {
+            "role": role,
+            "content": msg.content
+        };
     });
-}
+    
+    // 如果您在 handleSendMessage 中是在 API 呼叫**之後**才記錄 Bot 訊息，
+    // 這裡的 messagesForApi 的最後一條會是**剛剛的使用者輸入**。這是正確的。
 
+    // 2. 構造發送到 Agent Engine 的請求體
+    const requestBody = {
+        // 將整個轉換後的對話歷史傳遞給 API
+        messages: messagesForApi
+    };
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // 假設 Agent Engine API 回覆格式為 { response: string } 或類似結構
+        const botMessage = data.response || data.message || (data.messages && data.messages.length > 0 ? data.messages[0].content : 'API 回覆無內容');
+
+        return { 
+            success: true, 
+            message: botMessage 
+        };
+
+    } catch (error) {
+        console.error("Agent Engine API 呼叫失敗:", error);
+        throw new Error("無法連接 Agent Engine API。");
+    }
+}
 
 // --- 2. 訊息處理與打字特效 (修正紀錄邏輯) ---
 
