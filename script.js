@@ -11,42 +11,74 @@ const TYPING_SPEED = 30;
 // Initial welcome message text
 const INITIAL_WELCOME_TEXT = "歡迎使用 Demo。請輸入任何資訊，我會輸出內容並回覆您！";
 
+const API_URL = 'https://api-gateway-227719466535.us-central1.run.app/api/chat'; // 替換為您的 Cloud Run API URL
+
+let currentApiSessionId = null;
+
 // 全局對話狀態
 let conversations = []; // 儲存所有對話紀錄
 let currentChatId = null; // 當前對話的唯一 ID
 let currentMessages = []; // 當前對話的訊息陣列 [{sender: 'bot', content: '...'}, {sender: 'user', content: '...'}]
 
-// --- 1. API 模擬 ---
+
+// --- 1. API 呼叫 (已修正，符合 Cloud Run API 結構) ---
 
 /**
- * Simulate API call
- * @param {string} input
- * @returns {Promise<object>} - Simulated API response
+ * Call the Cloud Run Chat API
+ * @param {string} input - User message (使用者當前的輸入)
+ * @returns {Promise<object>} - API response object { success: boolean, message: string }
  */
-function dummyApiCall(input) {
-    return new Promise(resolve => {
-        // Simulate latency
-        setTimeout(() => {
-            let responseMessage = `您輸入了：「${input}」。`; 
+async function agentEngineApiCall(input) {
+    
+    // 【修正】根據您的 Cloud Run 範例，請求體只需要 session_id 和 message
+    const requestBody = {
+        // "session_id": currentApiSessionId, // 使用當前對話 ID
+        "message": input // 傳遞使用者當前的輸入
+    };
 
-            if (input.toLowerCase().includes('時間')) {
-                const now = new Date().toLocaleTimeString('zh-TW');
-                responseMessage += ` 現在時間是 ${now}。`; 
-            } else if (input.toLowerCase().includes('名字')) {
-                responseMessage += ` 這是 Demo Bot，很高興為您服務。`; 
-            } else if (input.length < 5) {
-                responseMessage += ` 資訊有點簡短，請提供更多細節！`; 
-            } else {
-                responseMessage += ` API 成功讀取您的資訊，並模擬產生了這段輸出內容。`; 
-            }
+    if (currentApiSessionId) {
+        // 如果已經有 ID，則傳遞 ID 以維持記憶
+        requestBody["session_id"] = currentApiSessionId;
+    }
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-            resolve({ success: true, message: responseMessage });
-        }, 1000); // 1s API processing time
-    });
+        if (!response.ok) {
+            // 檢查狀態碼，例如 4xx 或 5xx
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // print data to console for debugging
+        console.log("Cloud Run API 回覆:", data);
+        // 假設 API 回覆格式為 { response: string } 或 { message: string }
+        const botMessage = data.response?.[0]?.content || 
+                           data.history?.[data.history.length - 1]?.content ||
+                           'API 回覆無內容';
+        const newSessionId = data.session_id;
+
+        return { 
+            success: true, 
+            message: botMessage,
+            newSessionId: newSessionId
+        };
+
+    } catch (error) {
+        console.error("Cloud Run API 呼叫失敗:", error);
+        // 將錯誤往外拋，讓 handleSendMessage 處理
+        throw new Error("無法連接 Cloud Run API 或伺服器錯誤。");
+    }
 }
 
 
-// --- 2. 訊息處理與打字特效 (修正紀錄邏輯) ---
+// --- 2. 訊息處理與打字特效 ---
 
 /**
  * Create and append message element
@@ -65,8 +97,11 @@ function createMessageElement(content, sender, id = null, isPreTyped = false) {
         messageDiv.classList.add('user-message');
         messageDiv.textContent = content;
         
-        // 【已修正】: 無論是新訊息 (isPreTyped=false) 還是載入的歷史訊息 (isPreTyped=true)，
-        // 都必須記錄使用者訊息到 currentMessages，以避免歷史紀錄遺失。
+        // 無論是新訊息還是載入的歷史訊息，都必須記錄使用者訊息到 currentMessages
+        // if (!isPreTyped) {
+        //     // 只有在處理新輸入時才加入，因為 loadConversation 會在 isPreTyped=true 時自動加入
+        //     currentMessages.push({ sender: 'user', content: content }); 
+        // }
         currentMessages.push({ sender: 'user', content: content }); 
         
     } else {
@@ -143,6 +178,7 @@ function saveCurrentConversation(initialUserInput) {
             const newConversation = {
                 id: Date.now(), // 使用時間戳作為唯一 ID
                 summary: summary,
+                apiSessionId: currentApiSessionId,
                 // 訊息陣列是 currentMessages 減去初始歡迎訊息
                 messages: currentMessages.slice(1) 
             };
@@ -151,7 +187,8 @@ function saveCurrentConversation(initialUserInput) {
         } else {
             // 如果是對話更新，則更新其內容和摘要
             conversations[conversationIndex].messages = currentMessages.slice(1);
-            conversations[conversationIndex].summary = summary; 
+            conversations[conversationIndex].summary = summary;
+            conversations[conversationIndex].apiSessionId = currentApiSessionId;
         }
 
         // 重新渲染側邊欄
@@ -198,6 +235,8 @@ function loadConversation(chatId) {
     currentChatId = chatId;
     currentMessages = []; // 必須清空現有訊息，讓 createMessageElement 重新建立
 
+    currentApiSessionId = targetConversation.apiSessionId; // 更新當前 API session ID
+
     // 3. 渲染聊天視窗
     chatHistory.innerHTML = ''; 
     
@@ -207,10 +246,9 @@ function loadConversation(chatId) {
 
     // 載入歷史訊息 (isPreTyped=true)
     targetConversation.messages.forEach(msg => {
-        // // 這裡會觸發 createMessageElement 的 isPreTyped 邏輯，重新 populate currentMessages 
-        // createMessageElement(msg.content, msg.sender, null, true);
         if (msg.sender === 'user') {
-            createMessageElement(msg.content, 'user', null, true);
+            // isPreTyped=true 會避免在 createMessageElement 內重複 push
+            createMessageElement(msg.content, 'user', null, true); 
         } else { // bot message
             const botMsgDiv = createMessageElement(msg.content, 'bot', null, true);
             botMsgDiv.querySelector('.typing-target').textContent = msg.content;
@@ -238,7 +276,9 @@ function startNewConversation() {
     // 2. 重設狀態
     currentChatId = null; 
     currentMessages = []; 
-    chatHistory.innerHTML = ''; 
+    chatHistory.innerHTML = '';
+
+    currentApiSessionId = null;
 
     // 3. 重新載入初始訊息 (並觸發打字效果)
     initializeChat();
@@ -298,13 +338,18 @@ async function handleSendMessage() {
     userInput.placeholder = "API 處理中..."; 
 
     try {
-        // 4. 呼叫 Dummy API
-        const response = await dummyApiCall(input);
+        // 4. 呼叫 API
+        const response = await agentEngineApiCall(input);
+        if (response.newSessionId && !currentApiSessionId) {
+            currentApiSessionId = response.newSessionId;
+            console.log(`API 返回新的 Session ID: ${currentApiSessionId}`);
+        }
 
         // 5. 顯示 API 回覆
         let botResponseText;
         if (response && response.message) {
             botResponseText = response.message;
+            // 啟用打字效果
             typeMessage(typingTarget, botResponseText); 
         } else {
             botResponseText = "API 回覆格式錯誤或無內容。"; 
@@ -328,6 +373,7 @@ async function handleSendMessage() {
 
     } finally {
         // 8. 重新啟用輸入
+        // 延遲啟用，確保打字效果有時間完成
         setTimeout(() => {
             sendButton.disabled = false;
             userInput.placeholder = "在這裡輸入您的訊息..."; 
@@ -342,7 +388,7 @@ async function handleSendMessage() {
 // 事件監聽: 送出按鈕
 sendButton.addEventListener('click', handleSendMessage);
 
-// 事件監聽: Enter 鍵 【已修正】
+// 事件監聽: Enter 鍵
 userInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter' && !sendButton.disabled) { 
         handleSendMessage();
