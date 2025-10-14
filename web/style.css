@@ -1,0 +1,235 @@
+/* --- 1. 全域與背景設定 --- */
+:root {
+    --user-bubble-color: #4DA6A6; /* 您的使用者氣泡色 */
+    --bot-bubble-color: #F0F0E8; /* 您的機器人氣泡色 */
+    --background-color: #F5F5F5;
+    --text-color-dark: #333333;
+    --accent-color: #58B8B8;
+    --border-radius: 10px;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* 全頁背景圖樣式 */
+#full-page-background {
+    width: 100vw;
+    height: 100vh;
+    background-image: url('投研觀點_screen.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* --- 2. 聊天機器人浮動定位 --- */
+#chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000; /* 確保在所有內容之上 */
+}
+
+/* 聊天圖標 (未開啟時顯示) */
+.chat-bubble {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--user-bubble-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+.chat-bubble:hover { transform: scale(1.05); }
+
+/* 聊天視窗主體 */
+#chat-box {
+    width: 350px;
+    height: 500px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    opacity: 1;
+    transition: all 0.3s ease-in-out;
+}
+
+/* 視窗折疊時的樣式 */
+#chat-box.collapsed {
+    opacity: 0;
+    pointer-events: none; 
+    transform: translateY(10px); 
+    height: 0;
+    width: 0;
+    box-shadow: none;
+}
+
+/* --- 3. 標頭 (整合按鈕) --- */
+.chat-header {
+    padding: 10px 15px;
+    background-color: var(--user-bubble-color);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bot-name { font-weight: bold; }
+
+.header-action-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 3px 5px;
+    margin-left: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.header-action-btn:hover { opacity: 0.8; }
+.header-action-btn svg {flex-shrink: 0;}
+.header-action-btn .button-text {
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+/* --- 4. 聊天內容區 --- */
+#chat-history {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    border-bottom: 1px solid #eee;
+    scroll-behavior: smooth;
+    background-color: #fcfcfc;
+}
+
+/* 消息氣泡樣式 */
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    max-width: 80%;
+    width: fit-content;
+    word-wrap: break-word;
+    line-height: 1.5;
+    position: relative; 
+}
+
+.user-message {
+    background-color: var(--user-bubble-color); 
+    color: white;
+    margin-left: auto;
+    border-radius: 8px 8px 0 8px; 
+}
+.user-message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: -7px; 
+    width: 0;
+    height: 0;
+    border: 10px solid transparent; 
+    border-bottom-color: var(--user-bubble-color); 
+    border-right-width: 0; 
+    border-bottom-left-radius: 5px; 
+    transform: rotate(45deg); 
+}
+
+.bot-message {
+    background-color: var(--bot-bubble-color);
+    color: var(--text-color-dark);
+    margin-right: auto;
+    border-radius: 8px 8px 8px 0; 
+}
+.bot-message::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -7px; 
+    width: 0;
+    height: 0;
+    border: 10px solid transparent; 
+    border-bottom-color: var(--bot-bubble-color); 
+    border-left-width: 0; 
+    border-bottom-right-radius: 5px; 
+    transform: rotate(-45deg); 
+}
+
+/* --- 5. 輸入區 (使用您的 ID) --- */
+.input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #eee;
+    background-color: #fff;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    margin-right: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+#send-button {
+    background-color: var(--user-bubble-color);
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background-color 0.3s;
+}
+
+#send-button:hover:not(:disabled) { background-color: var(--accent-color); }
+#send-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* --- 快速回覆區塊樣式 --- */
+#quick-replies {
+    padding: 10px; /* 內部邊距 */
+    display: flex;
+    flex-wrap: wrap; /* 允許按鈕換行 */
+    gap: 8px; /* 按鈕間的間距 */
+    background-color: #fff; 
+    border-top: 1px solid #eee; /* 與聊天紀錄區隔開 */
+}
+
+.quick-reply-button {
+    background-color: #f0f0f0; /* 淺灰色背景 */
+    color: var(--text-color-dark);
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
+    white-space: nowrap; /* 避免文字換行 */
+    max-width: 100%;
+}
+
+.quick-reply-button:hover {
+    background-color: #e0e0e0;
+    border-color: var(--user-bubble-color); /* 滑鼠懸停時突出顯示 */
+}
