@@ -170,6 +170,23 @@ body {
     transform: rotate(-45deg); 
 }
 
+/* 圖片容器樣式 */
+.chart-container {
+    margin-top: 10px; /* 與文字隔開 */
+    padding-top: 5px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1); /* 可選：加一條分隔線 */
+    border-radius: 5px;
+}
+
+/* 實際圖片樣式 */
+.response-chart {
+    max-width: 100%; /* 確保圖片不超過氣泡寬度 */
+    height: auto; /* 保持圖片比例 */
+    display: block; /* 移除圖片底部的空間 */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* --- 5. 輸入區 (使用您的 ID) --- */
 .input-area {
     display: flex;
