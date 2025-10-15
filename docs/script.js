@@ -17,7 +17,6 @@ const TYPING_SPEED = 30;
 const INITIAL_WELCOME_TEXT = "歡迎使用玉山智見，今天想問甚麼問題呢？";
 
 const API_URL = 'https://api-gateway-227719466535.us-central1.run.app/api/chat'; 
-const CHART_IMAGE_HTML = '<div class="chart-container"><img src="1011-1.png" alt="圖表" class="response-chart"></div>';
 
 let currentApiSessionId = null;
 
@@ -123,7 +122,7 @@ function showTypingIndicator(targetElement) {
  * @param {HTMLElement} targetElement - Target element for content
  * @param {string} text - Full message text
  */
-function typeMessage(targetElement, text, imageHTML = '') {
+function typeMessage(targetElement, text) {
     let index = 0;
     
     // 必須清除 typing-target 內容，避免重複
@@ -136,12 +135,6 @@ function typeMessage(targetElement, text, imageHTML = '') {
             chatHistory.scrollTop = chatHistory.scrollHeight; 
         } else {
             clearInterval(intervalId);
-
-            // 如果有圖表 HTML，則插入
-            if (imageHTML) {
-                targetElement.insertAdjacentHTML('afterend', imageHTML);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            }
         }
     }, TYPING_SPEED);
 }
@@ -245,6 +238,10 @@ async function handleSendMessage() {
     const botMessageElement = createMessageElement('', 'bot');
     const typingTarget = botMessageElement.querySelector('.typing-target');
 
+    const chartKeywords = ["圖表", "走勢", "圖"];
+    const shouldInsertChart = chartKeywords.some(keyword => input.includes(keyword));
+    const CHART_URL = '1011-1.png';
+
     const typingIndicatorId = showTypingIndicator(typingTarget);
 
     // 3. 清空輸入並禁用按鈕
@@ -265,24 +262,27 @@ async function handleSendMessage() {
         // 5. 顯示 API 回覆
         let botResponseText;
         if (response && response.message) {
-            botResponseText = response.message;
-
-            let finalBotContent = botResponseText;
-            let imageHTML = '';
-
-            if (botResponseText.includes("圖表")) {
-                imageHTML = CHART_IMAGE_HTML;
-                finalBotContent = `${botResponseText}`;
+            if (shouldInsertChart) {
+                botResponseText = "好的，這是您要的資訊和圖表。";
+                const chartHTML = `<div class="chart-container">
+                                    <img src="${CHART_URL}" alt="圖表" class="response-chart">
+                                   </div>`;
+                typeMessage(typingTarget, botResponseText);
+                setTimeout(() => {
+                    const messageDiv = botMessageElement;
+                    messageDiv.innerHTML += chartHTML;
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }, botResponseText.length * TYPING_SPEED + 50); // 打字結束後再插入圖表
             }
-            // 啟用打字效果
-            // typeMessage(typingTarget, botResponseText); 
-            typeMessage(typingTarget, finalBotContent, imageHTML);
-        } else {
+            else {
+                botResponseText = response.message;
+                typeMessage(typingTarget, botResponseText); 
+            }            
+        }
+        else {
             botResponseText = "API 回覆格式錯誤或無內容。"; 
             typeMessage(typingTarget, botResponseText); 
         }
-        
-        // 6. 紀錄 Bot 訊息 (已經在 createMessageElement 中處理)
 
     } catch (error) {
         // 錯誤處理
