@@ -8,8 +8,8 @@ const newChatButton = document.getElementById('new-chat-button');
 const quickRepliesContainer = document.getElementById('quick-replies');
 const QUICK_REPLIES = [
     "今天的市場觀點是什麼？",
-    "玉山智見是什麼？",
-    "如何使用玉山智見？",
+    // "玉山智見是什麼？",
+    // "如何使用玉山智見？",
 ];
 // Typing speed (in ms)
 const TYPING_SPEED = 30; 
@@ -17,6 +17,7 @@ const TYPING_SPEED = 30;
 const INITIAL_WELCOME_TEXT = "歡迎使用玉山智見，今天想問甚麼問題呢？";
 
 const API_URL = 'https://api-gateway-227719466535.us-central1.run.app/api/chat'; 
+const CHART_IMAGE_HTML = '<div class="chart-container"><img src="1011-1.png" alt="圖表" class="response-chart"></div>';
 
 let currentApiSessionId = null;
 
@@ -122,7 +123,7 @@ function showTypingIndicator(targetElement) {
  * @param {HTMLElement} targetElement - Target element for content
  * @param {string} text - Full message text
  */
-function typeMessage(targetElement, text) {
+function typeMessage(targetElement, text, imageHTML = '') {
     let index = 0;
     
     // 必須清除 typing-target 內容，避免重複
@@ -135,6 +136,12 @@ function typeMessage(targetElement, text) {
             chatHistory.scrollTop = chatHistory.scrollHeight; 
         } else {
             clearInterval(intervalId);
+
+            // 如果有圖表 HTML，則插入
+            if (imageHTML) {
+                targetElement.insertAdjacentHTML('afterend', imageHTML);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
         }
     }, TYPING_SPEED);
 }
@@ -259,8 +266,17 @@ async function handleSendMessage() {
         let botResponseText;
         if (response && response.message) {
             botResponseText = response.message;
+
+            let finalBotContent = botResponseText;
+            let imageHTML = '';
+
+            if (botResponseText.includes("圖表")) {
+                imageHTML = CHART_IMAGE_HTML;
+                finalBotContent = `${botResponseText}`;
+            }
             // 啟用打字效果
-            typeMessage(typingTarget, botResponseText); 
+            // typeMessage(typingTarget, botResponseText); 
+            typeMessage(typingTarget, finalBotContent, imageHTML);
         } else {
             botResponseText = "API 回覆格式錯誤或無內容。"; 
             typeMessage(typingTarget, botResponseText); 
