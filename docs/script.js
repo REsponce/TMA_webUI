@@ -6,6 +6,10 @@ const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 const newChatButton = document.getElementById('new-chat-button');
 const quickRepliesContainer = document.getElementById('quick-replies');
+const lightbox = document.getElementById('lightbox');
+const lightboxImage = document.getElementById('lightbox-image');
+const closeLightboxBtn = document.getElementById('close-lightbox');
+
 const QUICK_REPLIES = [
     "今天的市場觀點是什麼？",
     // "玉山智見是什麼？",
@@ -17,6 +21,7 @@ const TYPING_SPEED = 30;
 const INITIAL_WELCOME_TEXT = "歡迎使用玉山智見，今天想問甚麼問題呢？";
 
 const API_URL = 'https://api-gateway-227719466535.us-central1.run.app/api/chat'; 
+const CHART_URL = '1011-1.png';
 
 let currentApiSessionId = null;
 
@@ -122,7 +127,7 @@ function showTypingIndicator(targetElement) {
  * @param {HTMLElement} targetElement - Target element for content
  * @param {string} text - Full message text
  */
-function typeMessage(targetElement, text) {
+function typeMessage(targetElement, text, callback) {
     let index = 0;
     
     // 必須清除 typing-target 內容，避免重複
@@ -135,6 +140,7 @@ function typeMessage(targetElement, text) {
             chatHistory.scrollTop = chatHistory.scrollHeight; 
         } else {
             clearInterval(intervalId);
+            if (callback) { callback();}
         }
     }, TYPING_SPEED);
 }
@@ -240,7 +246,6 @@ async function handleSendMessage() {
 
     const chartKeywords = ["圖表", "走勢", "圖"];
     const shouldInsertChart = chartKeywords.some(keyword => input.includes(keyword));
-    const CHART_URL = '1011-1.png';
 
     const typingIndicatorId = showTypingIndicator(typingTarget);
 
@@ -264,15 +269,19 @@ async function handleSendMessage() {
         if (response && response.message) {
             if (shouldInsertChart) {
                 botResponseText = "好的，這是您要的資訊和圖表。";
-                const chartHTML = `<div class="chart-container">
-                                    <img src="${CHART_URL}" alt="圖表" class="response-chart">
-                                   </div>`;
-                typeMessage(typingTarget, botResponseText);
-                setTimeout(() => {
-                    const messageDiv = botMessageElement;
-                    messageDiv.innerHTML += chartHTML;
+                const chartHtml = `
+                    <div class="chart-container">
+                        <img 
+                            src="${CHART_URL}" 
+                            alt="分析圖表" 
+                            class="response-chart"
+                            onclick="openLightbox('${CHART_URL}')"  // 【關鍵修改】
+                        >
+                    </div>`;
+                typeMessage(typingTarget, botResponseText, () => {
+                    botMessageElement.innerHTML += chartHtml;
                     chatHistory.scrollTop = chatHistory.scrollHeight;
-                }, botResponseText.length * TYPING_SPEED + 50); // 打字結束後再插入圖表
+                });
             }
             else {
                 botResponseText = response.message;
@@ -292,16 +301,36 @@ async function handleSendMessage() {
         typeMessage(typingTarget, errorMsg);
         currentMessages.push({ sender: 'bot', content: errorMsg });
 
-    } finally {
-        // 7. 重新啟用輸入
-        setTimeout(() => {
-            sendButton.disabled = false;
-            userInput.placeholder = "在這裡輸入您的訊息..."; 
-            userInput.focus();
-        }, 1200); 
     }
 }
 
+// --- 新增燈箱函數 ---
+
+/**
+ * Open the lightbox with a specified image source.
+ * @param {string} src - The image URL to display.
+ */
+function openLightbox(src) {
+    lightboxImage.src = src;
+    lightbox.style.display = 'block';
+}
+
+/**
+ * Close the lightbox.
+ */
+function closeLightbox() {
+    lightbox.style.display = 'none';
+    lightboxImage.src = ''; // 清空圖片來源
+}
+
+// 監聽關閉按鈕和燈箱背景的點擊
+closeLightboxBtn.addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => {
+    // 點擊燈箱背景時關閉，但點擊圖片本身不關閉
+    if (e.target === lightbox) { 
+        closeLightbox();
+    }
+});
 
 // --- 5. 事件監聽  ---
 

@@ -185,6 +185,12 @@ body {
     display: block; /* 移除圖片底部的空間 */
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    cursor: zoom-in; 
+    transition: transform 0.2s;
+}
+.response-chart:hover {
+    transform: scale(1.02);
 }
 
 /* --- 5. 輸入區 (使用您的 ID) --- */
@@ -249,4 +255,60 @@ body {
 .quick-reply-button:hover {
     background-color: #e0e0e0;
     border-color: var(--user-bubble-color); /* 滑鼠懸停時突出顯示 */
+}
+
+/* --- 6. 燈箱 (Lightbox) 樣式 --- */
+
+/* 燈箱背景 (全屏覆蓋) */
+#lightbox {
+    position: fixed;
+    z-index: 2000; /* 確保在所有內容之上，比聊天視窗高 */
+    padding-top: 60px; /* 留出頂部空間 */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.9); /* 黑色半透明背景 */
+    display: none; /* 預設隱藏 */
+    cursor: pointer; /* 讓使用者知道點擊背景也可以關閉 */
+}
+
+/* 燈箱中的圖片 */
+#lightbox-image {
+    margin: auto;
+    display: block;
+    width: 80%; /* 圖片最大寬度 */
+    max-width: 700px;
+    height: auto;
+    animation-name: zoom; /* 新增一個動畫效果 */
+    animation-duration: 0.6s;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 關閉按鈕 */
+#close-lightbox {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    line-height: 1; /* 確保 X 符號置中 */
+}
+
+#close-lightbox:hover,
+#close-lightbox:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 圖片放大動畫 (可選) */
+@keyframes zoom {
+    from {transform: scale(0.1)} 
+    to {transform: scale(1)}
 }
