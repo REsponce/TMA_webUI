@@ -283,6 +283,8 @@ async function handleSendMessage() {
                     chatHistory.scrollTop = chatHistory.scrollHeight;
                     //重啟輸入
                     sendButton.disabled = false;
+                    userInput.placeholder = "在這裡輸入您的訊息...";
+                    userInput.focus();
                 });
             }
             else {
@@ -290,6 +292,8 @@ async function handleSendMessage() {
                 typeMessage(typingTarget, botResponseText); 
                 //重啟輸入
                 sendButton.disabled = false;
+                userInput.placeholder = "在這裡輸入您的訊息...";
+                userInput.focus();
             }            
         }
         else {
@@ -297,6 +301,8 @@ async function handleSendMessage() {
             typeMessage(typingTarget, botResponseText); 
             //重啟輸入
             sendButton.disabled = false;
+            userInput.placeholder = "在這裡輸入您的訊息...";
+            userInput.focus();
         }
 
     } catch (error) {
