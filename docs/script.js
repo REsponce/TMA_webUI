@@ -281,16 +281,22 @@ async function handleSendMessage() {
                 typeMessage(typingTarget, botResponseText, () => {
                     botMessageElement.innerHTML += chartHtml;
                     chatHistory.scrollTop = chatHistory.scrollHeight;
+                    //重啟輸入
+                    sendButton.disabled = false;
                 });
             }
             else {
                 botResponseText = response.message;
                 typeMessage(typingTarget, botResponseText); 
+                //重啟輸入
+                sendButton.disabled = false;
             }            
         }
         else {
             botResponseText = "API 回覆格式錯誤或無內容。"; 
             typeMessage(typingTarget, botResponseText); 
+            //重啟輸入
+            sendButton.disabled = false;
         }
 
     } catch (error) {
